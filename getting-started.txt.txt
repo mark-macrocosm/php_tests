@@ -1,0 +1,303 @@
+<?php
+
+class Singleton {
+    private static $instance;
+
+    //Restricts the instantiation of this class
+    private function __construct() {}
+
+    //Prevents this class from being cloned
+    private function __clone() {}
+
+    //Checks if there's an instance of the class.
+    //If not, it will create a new instance of itself
+    public static function getInstance(): self {
+        if (!isset(self::$instance)) {
+            self::$instance = new self;
+        }
+
+        return self::$instance;
+    }
+
+//Functions
+
+/**
+ * Display user name
+ */
+    function userEcho() {
+        $singleton = Singleton::getInstance();
+        $name = $_POST['userName'];
+
+        if ($singleton->validateName($name)) {
+            echo "The value of 'name' is '{$name}'";
+        } else {
+            echo "Please type only letters.";
+        }
+    }
+
+/**
+ * Query by user name
+ */
+    function userQuery() {
+        $singleton = Singleton::getInstance();
+        $name = $_POST['userName'];
+
+        if ($singleton->validateName($name)) {
+            /*$db = mysqli_connect("localhost", "root", "");
+
+            if ($db) {
+            die("Connection failed: " . mysqli_connect_error());
+            $sql = "SELECT * FROM `users` WHERE `name` = '{$name}' LIMIT 1";
+            $result = mysqli_query($db, $sql);
+
+            if (mysqli_num_rows($result) > 0) {
+            // output data of each row
+            while ($row = mysqli_fetch_assoc($result)) {
+            echo "The name '{$row["name"]}' was found on the database.";
+            }
+            } else {
+            echo "No record found with this name";
+            }
+            }*/
+            echo "The name '{$name}' was found on the database";
+        } else {
+            echo "Invalid name";
+        }
+    }
+
+/**
+ * Output the contents of a file
+ */
+    function userFile($file) {
+        $readfile = file_get_contents($file);
+        $sanitizedFile = filter_var($readfile, FILTER_SANITIZE_STRING);
+
+        echo '<pre>';
+        echo $sanitizedFile;
+        echo '</pre>';
+    }
+
+/**
+ * Nested conditions
+ */
+    function nestedConditions($conditionA, $conditionB, $conditionC) {
+        if ($conditionA) {
+            if ($conditionB && $conditionC) {
+                echo 'ABC';
+            } elseif ($conditionB && !($conditionC)) {
+                echo '^C';
+            } else {
+                echo '^B';
+            }
+        } else {
+            echo '^A';
+        }
+        return $this;
+    }
+
+/**
+ * Return statements
+ *
+ * @return boolean
+ */
+    function returnStatements($boolean) {
+        if (!$boolean) {
+            echo "oh no!";
+            return;
+        }
+
+        echo "Hello world!";
+        return $this;
+    }
+
+/**
+ * Null coalescing
+ */
+    function nullCoalescing() {
+        $name = $_GET['name'] ?? $_POST['name'] ?? 'nobody';
+
+        return $name;
+    }
+
+/**
+ * Method chaining
+ */
+    function methodChained() {
+        // @TODO Implement method chaining
+        $singleton = Singleton::getInstance();
+        $singleton->nestedConditions(true, true, false)->returnStatements(false);
+    }
+
+/**
+ * Immutables are hard to find
+ */
+    function checkValue($value) {
+        $result = null;
+
+        // @TODO Make all the immutable values (int, string) in this class
+        // easily replaceable
+        switch ($value) {
+        case 'stringA':
+            $result = 1;
+            break;
+
+        case 'stringB':
+            $result = 2;
+            break;
+        }
+
+        return $result;
+    }
+
+/**
+ * Check a string is a 24 hour time
+ */
+    function regexTest($time24Hour) {
+        if (preg_match("#((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]):([0-5])([0-9]))#", $time24Hour)) {
+            echo "Time-> {$time24Hour}";
+            return true;
+        } elseif (preg_match("#((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]))#", $time24Hour)) {
+            echo "Time-> {$time24Hour}";
+            return true;
+        }
+
+        //In case user types in one input and tries sending with another
+        echo "Invalid time format";
+        return false;
+    }
+
+/**
+ * Name validation
+ */
+    function validateName($name) {
+        //Removes any html code before
+        $sanitizedName = filter_var($name, FILTER_SANITIZE_STRING);
+
+        //Allows one space in between words and removes unnecessary whitespace
+        $sanitizedName = str_replace(' ', '', $name);
+
+        if (ctype_alpha($sanitizedName)) {
+            return true;
+        }
+
+        return false;
+    }
+}
+
+/**
+ * For testing proposes
+ */
+$singleton = Singleton::getInstance();
+
+if (isset($_POST['submit_userEcho'])) {
+    $singleton->userEcho($_POST['submit_userEcho']);
+} else if (isset($_POST['submit_userQuery'])) {
+    $singleton->userQuery($_POST['submit_userQuery']);
+} else if (isset($_POST['file_submit'])) {
+    $singleton->userFile($_FILES["read_file"]["tmp_name"]);
+} else if (isset($_POST['nestedConditions'])) {
+    $singleton->nestedConditions(
+        isset($_POST['conditionA']) ?? true ?? false,
+        isset($_POST['conditionB']) ?? true ?? false,
+        isset($_POST['conditionC']) ?? true ?? false
+    );
+} else if (isset($_POST['regexTest1'])) {
+    $singleton->regexTest($_POST['regexTestSeconds']);
+} else if (isset($_POST['regexTest2'])) {
+    $singleton->regexTest($_POST['regexTestNormal']);
+} else if (isset($_POST['regexTest2'])) {
+    $singleton->regexTest($_POST['regexTestNormal']);
+} else if (isset($_POST['methodChained'])) {
+    $singleton->methodChained();
+}
+?>
+
+<style>
+form {
+   max-width: 500px;
+   padding: 15px
+}
+
+.d-block {
+   display: block;
+}
+
+p {
+   font-weight: bold;
+}
+
+.text-center {
+   text-align: center;
+}
+
+div,
+.d-block {
+   margin: 15px 0;
+}
+
+.mx-auto,
+form {
+   margin: auto;
+}
+
+fieldset {
+   margin: 15px 0;
+}
+</style>
+
+<form method="post" enctype="multipart/form-data">
+
+   <fieldset class="text-center">
+      <label for="userName">User name</label>
+      <input type="text" name="userName" autofocus>
+
+      <input class="d-block" type="submit" name="submit_userEcho" value="User Echo">
+      <input class="d-block" type="submit" name="submit_userQuery" value="User Query">
+   </fieldset>
+
+   <fieldset class="text-center">
+      <p>Nested Conditions</p>
+      <label for="conditionA">Condition A</label>
+      <input type="checkbox" id="conditionA" name="conditionA" checked>
+
+      <label for="conditionB">Condition A</label>
+      <input type="checkbox" id="conditionB" name="conditionB" checked>
+
+      <label for="conditionC">Condition A</label>
+      <input type="checkbox" id="conditionC" name="conditionC" checked>
+
+      <hr>
+      <input class="mx-auto d-block" type="submit" name="nestedConditions" value="Test Nested Conditions">
+   </fieldset>
+
+   <fieldset class="text-center">
+      <p>Regular Expression Test</p>
+
+      <p>
+         <label for="lastName">Time with seconds</label>
+         <input type="text" id="lastName" placeholder="00:00:00" name="regexTestSeconds"
+            pattern="((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]):([0-5])([0-9]))">
+      </p>
+
+      <p>
+         <label for="lastName">Time without seconds</label>
+         <input type="text" id="lastName" placeholder="00:00" name="regexTestNormal"
+            pattern="((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]))">
+      </p>
+
+      <hr>
+      <input class="mx-auto d-block" type="submit" name="regexTest1" value="Test Time with seconds">
+      <br>
+      <input class="mx-auto d-block" type="submit" name="regexTest2" value="Time without seconds">
+   </fieldset>
+
+   <fieldset class="text-center">
+      <p>Method Chained Test</p>
+      <input class="mx-auto d-block" type="submit" name="methodChained" value="Test Method Chained">
+   </fieldset>
+
+   <hr>
+   <input class="d-block" type="file" name="read_file">
+   <input class="d-block" type="submit" name="file_submit" value="Read File">
+
+</form>
