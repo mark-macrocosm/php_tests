@@ -1,16 +1,45 @@
 <?php
 
 class Singleton {
+    
+    /**
+     * Use constants for immutable types instead of variables
+     * Use descriptive names
+     */
+    const STRING_A     = 'A';
+    const STRING_A_LONG = 'stringA';
+    const STRING_B_LONG = 'stringB';
+    const STRING_NON_A = '^A';
+    const STRING_NON_B = '^B';
+    const STRING_NON_C = '^C';
+    const STRING_ABC   = 'ABC';
+    const INT_A = 1;
+    const INT_B = 2;
+    
+    /**
+     * Describe method properties
+     * Prefix private/protected methods/properties with underscore (_)
+     * 
+     * @var Singleton
+     */
     private static $instance;
 
-    //Restricts the instantiation of this class
+    /**
+     * Use PHPDoc style comments
+     * 
+     * Restricts the instantiation of this class
+     */
     private function __construct() {}
 
-    //Prevents this class from being cloned
+    /**
+     * Prevents this class from being cloned
+     */
     private function __clone() {}
 
-    //Checks if there's an instance of the class.
-    //If not, it will create a new instance of itself
+    /**
+     * Checks if there's an instance of the class.
+     * If not, it will create a new instance of itself
+     */
     public static function getInstance(): self {
         if (!isset(self::$instance)) {
             self::$instance = new self;
@@ -19,285 +48,193 @@ class Singleton {
         return self::$instance;
     }
 
-//Functions
-
-/**
- * Display user name
- */
-    function userEcho() {
-        $singleton = Singleton::getInstance();
-        $name = $_POST['userName'];
-
-        if ($singleton->validateName($name)) {
-            echo "The value of 'name' is '{$name}'";
-        } else {
-            echo "Please type only letters.";
+    /**
+     * Display user name
+     * 
+     * Spacing/alignment matter
+     */
+    function userEcho($name) {
+        // No need for this
+        # $singleton = Singleton::getInstance();
+        
+        // Don't change method arguments
+        # $name = $_POST['userName'];
+        
+        // Don't introduce new strings
+        # if ($singleton->validateName($name)) {
+        #     echo "The value of 'name' is '{$name}'";
+        # } else {
+        #     echo "Please type only letters.";
+        # }
+        
+        // Validate type and length
+        if (!is_string($name) || !strlen($name)) {
+            throw new Exception('Name is not a valid string');
         }
+
+        // Clean-up (prevent XSS)
+        $name = filter_var($name, FILTER_SANITIZE_STRING);
+        
+        // Clean-up
+        echo "The value of 'name' is '{$name}'";
     }
 
-/**
- * Query by user name
- */
-    function userQuery() {
-        $singleton = Singleton::getInstance();
-        $name = $_POST['userName'];
+    /**
+     * Query by user name
+     */
+    function userQuery($name) {
+        // This method is not static, so it already has access to $this
+        # $singleton = Singleton::getInstance();
+        
+        // Don't change method names, don't assume input origin
+        # $name = $_POST['userName'];
 
-        if ($singleton->validateName($name)) {
-            /*$db = mysqli_connect("localhost", "root", "");
+        // Don't output new strings
+        # if ($singleton->validateName($name)) {
+        #    echo "The name '{$name}' was found on the database";
+        # } else {
+        #    echo "Invalid name";
+        # }
+        
+        // Use built-in functions for SQL escaping
+        mysql_query(
+            sprintf(
+                "SELECT * FROM `test` WHERE `name` = '%s' LIMIT 1",
+                // For certain encodings this is not effective
+                // Always use 'utf8'
+                mysql_real_escape_string($name)
+            ),
+        );
+    }
 
-            if ($db) {
-            die("Connection failed: " . mysqli_connect_error());
-            $sql = "SELECT * FROM `users` WHERE `name` = '{$name}' LIMIT 1";
-            $result = mysqli_query($db, $sql);
+    /**
+     * Output the contents of a file
+     */
+    function userFile($path) {
+        // Don't change metod argument names
+        // Don't read file in memory - this might lead to OOM issues
+        # $readfile = file_get_contents($file);
+        // Why assume we should remove tags?
+        # $sanitizedFile = filter_var($readfile, FILTER_SANITIZE_STRING);
 
-            if (mysqli_num_rows($result) > 0) {
-            // output data of each row
-            while ($row = mysqli_fetch_assoc($result)) {
-            echo "The name '{$row["name"]}' was found on the database.";
-            }
-            } else {
-            echo "No record found with this name";
-            }
-            }*/
-            echo "The name '{$name}' was found on the database";
-        } else {
-            echo "Invalid name";
+        // User paths are relative to this root
+        $root = '/real/path/to/files';
+
+        // The main point is to never allow users to perform directory traversal
+        // Special characters like "." and ".." and direct root access should be forbidden
+        if (!is_string($path) || !strlen($path)) {
+            throw new Exception('No file path provided');
         }
-    }
 
-/**
- * Output the contents of a file
- */
-    function userFile($file) {
-        $readfile = file_get_contents($file);
-        $sanitizedFile = filter_var($readfile, FILTER_SANITIZE_STRING);
-
-        echo '<pre>';
-        echo $sanitizedFile;
-        echo '</pre>';
-    }
-
-/**
- * Nested conditions
- */
-    function nestedConditions($conditionA, $conditionB, $conditionC) {
-        if ($conditionA) {
-            if ($conditionB && $conditionC) {
-                echo 'ABC';
-            } elseif ($conditionB && !($conditionC)) {
-                echo '^C';
-            } else {
-                echo '^B';
-            }
-        } else {
-            echo '^A';
+        // Validate relative path, file name and extension
+        if (!preg_match('%^(?:allowed_path_a|allowed_path_b)\/\w+\.(?:ext|png|jpe?g)$%i', $path)) {
+            throw new Exception('Invalid file path');
         }
-        return $this;
+
+        // File not found; also check that the path points to a file, not a directory
+        if (!is_file("$root/$path")) {
+            throw new Exception('File not found');
+        }
+
+        readfile("$root/$path");
     }
 
-/**
- * Return statements
- *
- * @return boolean
- */
+    /**
+     * Nested conditions
+     */
+    function nestedConditions() {
+        // A long string of short-if statements is less readable than the nested ifs
+        do {
+            if (!$conditionA) {
+                echo self::STRING_NON_A;
+                break;
+            }
+
+            if (!$conditionB) {
+                echo self::STRING_NON_B;
+                break;
+            }
+
+            if (!$conditionC) {
+                echo self::STRING_NON_C;
+                break;
+            }
+
+            echo self::STRING_ABC;
+        } while(false);
+    }
+
+    /**
+     * Return statements
+     *
+     * @return boolean
+     */
     function returnStatements($boolean) {
-        if (!$boolean) {
-            echo "oh no!";
-            return;
+        // Don't alter the function behavior
+        if ($conditionA) {
+            echo self::STRING_A;
         }
 
-        echo "Hello world!";
+        // Implicit boolean conversion
+        return !!$conditionA;
+    }
+
+    /**
+     * Null coalescing
+     */
+    function nullCoalescing() {
+        return $_GET['name'] ?? $_POST['name'] ?? 'nobody';
+    }
+
+    /**
+     * Method chaining
+     * 
+     * @return $this
+     */
+    function methodChained() {
         return $this;
     }
 
-/**
- * Null coalescing
- */
-    function nullCoalescing() {
-        $name = $_GET['name'] ?? $_POST['name'] ?? 'nobody';
-
-        return $name;
-    }
-
-/**
- * Method chaining
- */
-    function methodChained() {
-        // @TODO Implement method chaining
-        $singleton = Singleton::getInstance();
-        $singleton->nestedConditions(true, true, false)->returnStatements(false);
-    }
-
-/**
- * Immutables are hard to find
- */
+    /**
+     * Immutables are hard to find
+     */
     function checkValue($value) {
         $result = null;
-
-        // @TODO Make all the immutable values (int, string) in this class
-        // easily replaceable
+        
+        // We should't use constants (strings, ints) locally
+        // Store them as class constants instead
         switch ($value) {
-        case 'stringA':
-            $result = 1;
-            break;
-
-        case 'stringB':
-            $result = 2;
-            break;
+            case self::STRING_A_LONG:
+                $result = INT_A;
+                break;
+                
+            case self::STRING_B_LONG:
+                $result = INT_B;
+                break;
         }
-
+        
         return $result;
     }
 
-/**
- * Check a string is a 24 hour time
- */
+    /**
+     * Check a string is a 24 hour time
+     * 
+     * @return boolean
+     */
     function regexTest($time24Hour) {
-        if (preg_match("#((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]):([0-5])([0-9]))#", $time24Hour)) {
-            echo "Time-> {$time24Hour}";
-            return true;
-        } elseif (preg_match("#((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]))#", $time24Hour)) {
-            echo "Time-> {$time24Hour}";
-            return true;
-        }
-
-        //In case user types in one input and tries sending with another
-        echo "Invalid time format";
-        return false;
-    }
-
-/**
- * Name validation
- */
-    function validateName($name) {
-        //Removes any html code before
-        $sanitizedName = filter_var($name, FILTER_SANITIZE_STRING);
-
-        //Allows one space in between words and removes unnecessary whitespace
-        $sanitizedName = str_replace(' ', '', $name);
-
-        if (ctype_alpha($sanitizedName)) {
-            return true;
-        }
-
-        return false;
+        // Don't output new strings
+        // No need to sanitize further, a regex will do
+        // [0-9] is equivalent to \d
+        // 0 left padding - so [01]\d instad of [01]?\d (02:00 instead of 2:00)
+        // DRY - don't repeat yourself, the 00-59 minute/second block can appear once or twice
+        // Don't use capturing blocks if you don't need them - (?:) instead of ()
+        // preg_match returns 0,1 or false; expected return value is boolean
+        return !!preg_match('#^(?:[01]\d|2[0-3])(?:\:[0-5]\d){1,2}$#', $time24Hour);
     }
 }
 
 /**
- * For testing proposes
+ * SoC - Separation of Concerns
+ *  A PHP file should either work as a silent library or a template file, not both
+ *  Template files should not output text when accessed directly
  */
-$singleton = Singleton::getInstance();
-
-if (isset($_POST['submit_userEcho'])) {
-    $singleton->userEcho($_POST['submit_userEcho']);
-} else if (isset($_POST['submit_userQuery'])) {
-    $singleton->userQuery($_POST['submit_userQuery']);
-} else if (isset($_POST['file_submit'])) {
-    $singleton->userFile($_FILES["read_file"]["tmp_name"]);
-} else if (isset($_POST['nestedConditions'])) {
-    $singleton->nestedConditions(
-        isset($_POST['conditionA']) ?? true ?? false,
-        isset($_POST['conditionB']) ?? true ?? false,
-        isset($_POST['conditionC']) ?? true ?? false
-    );
-} else if (isset($_POST['regexTest1'])) {
-    $singleton->regexTest($_POST['regexTestSeconds']);
-} else if (isset($_POST['regexTest2'])) {
-    $singleton->regexTest($_POST['regexTestNormal']);
-} else if (isset($_POST['regexTest2'])) {
-    $singleton->regexTest($_POST['regexTestNormal']);
-} else if (isset($_POST['methodChained'])) {
-    $singleton->methodChained();
-}
-?>
-
-<style>
-form {
-   max-width: 500px;
-   padding: 15px
-}
-
-.d-block {
-   display: block;
-}
-
-p {
-   font-weight: bold;
-}
-
-.text-center {
-   text-align: center;
-}
-
-div,
-.d-block {
-   margin: 15px 0;
-}
-
-.mx-auto,
-form {
-   margin: auto;
-}
-
-fieldset {
-   margin: 15px 0;
-}
-</style>
-
-<form method="post" enctype="multipart/form-data">
-
-   <fieldset class="text-center">
-      <label for="userName">User name</label>
-      <input type="text" name="userName" autofocus>
-
-      <input class="d-block" type="submit" name="submit_userEcho" value="User Echo">
-      <input class="d-block" type="submit" name="submit_userQuery" value="User Query">
-   </fieldset>
-
-   <fieldset class="text-center">
-      <p>Nested Conditions</p>
-      <label for="conditionA">Condition A</label>
-      <input type="checkbox" id="conditionA" name="conditionA" checked>
-
-      <label for="conditionB">Condition A</label>
-      <input type="checkbox" id="conditionB" name="conditionB" checked>
-
-      <label for="conditionC">Condition A</label>
-      <input type="checkbox" id="conditionC" name="conditionC" checked>
-
-      <hr>
-      <input class="mx-auto d-block" type="submit" name="nestedConditions" value="Test Nested Conditions">
-   </fieldset>
-
-   <fieldset class="text-center">
-      <p>Regular Expression Test</p>
-
-      <p>
-         <label for="lastName">Time with seconds</label>
-         <input type="text" id="lastName" placeholder="00:00:00" name="regexTestSeconds"
-            pattern="((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]):([0-5])([0-9]))">
-      </p>
-
-      <p>
-         <label for="lastName">Time without seconds</label>
-         <input type="text" id="lastName" placeholder="00:00" name="regexTestNormal"
-            pattern="((0([0-9])|(1[0-9]{1})|(2[0-4])):([0-5])([0-9]))">
-      </p>
-
-      <hr>
-      <input class="mx-auto d-block" type="submit" name="regexTest1" value="Test Time with seconds">
-      <br>
-      <input class="mx-auto d-block" type="submit" name="regexTest2" value="Time without seconds">
-   </fieldset>
-
-   <fieldset class="text-center">
-      <p>Method Chained Test</p>
-      <input class="mx-auto d-block" type="submit" name="methodChained" value="Test Method Chained">
-   </fieldset>
-
-   <hr>
-   <input class="d-block" type="file" name="read_file">
-   <input class="d-block" type="submit" name="file_submit" value="Read File">
-
-</form>
